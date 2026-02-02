@@ -1,0 +1,37 @@
+[
+  {
+    "id": "hello-world-flow",
+    "config": {
+      "src\\hello\\log-greeting.step.js": {
+        "x": 712,
+        "y": 81
+      },
+      "src\\hello\\hello-api.step.ts": {
+        "x": -190,
+        "y": 37
+      },
+      "src\\hello\\process_greeting_step.py": {
+        "x": 268,
+        "y": 67
+      }
+    }
+  },
+  {
+    "id": "chat-example-flow",
+    "config": {
+      "src\\chat\\chat-api.step.ts": {
+        "x": -120,
+        "y": 58
+      }
+    }
+  },
+  {
+    "id": "chat-flow",
+    "config": {
+      "src\\chat\\simple-chat.step.ts": {
+        "x": 135,
+        "y": 91
+      }
+    }
+  }
+]
