@@ -1,5 +1,18 @@
-import Chat from "./components/Chat";
+import { BrowserRouter } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import AppRoutes from "./components/AppRoutes";
 
 export default function App() {
-  return <Chat />;
+  return (
+    <BrowserRouter>
+      <div className="flex flex-col min-h-screen bg-[#292826] text-[#F9D342]">
+        <Header />
+        <div className="flex-1">
+          <AppRoutes />
+        </div>
+        <Footer />
+      </div>
+    </BrowserRouter>
+  );
 }

@@ -9,11 +9,14 @@ import cors from 'cors'
 export default defineConfig({
   plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin, bullmqPlugin],
   app: (app) => {
-    app.use(cors({
-      origin: "*", // ⚠️ Dev only – allow all origins
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-      credentials: false,
-    }))
+    app.use(
+      cors({
+        origin: "*", // ⚠️ Dev only – allow all origins
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        // Allow custom headers used by the frontend (e.g. X-Request-Time)
+        allowedHeaders: ["Content-Type", "Authorization", "X-Request-Time"],
+        credentials: false,
+      }),
+    )
   },
 })
