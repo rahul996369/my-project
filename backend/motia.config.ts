@@ -5,6 +5,7 @@ import observabilityPlugin from '@motiadev/plugin-observability/plugin'
 import statesPlugin from '@motiadev/plugin-states/plugin'
 import bullmqPlugin from '@motiadev/plugin-bullmq/plugin'
 import cors from 'cors'
+import { createUploadRoute } from './src/upload-pdf.js'
 
 export default defineConfig({
   plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin, bullmqPlugin],
@@ -18,5 +19,6 @@ export default defineConfig({
         credentials: false,
       }),
     )
+    app.use(createUploadRoute())
   },
 })

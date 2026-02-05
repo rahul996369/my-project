@@ -1,0 +1,101 @@
+/* Table responsive wrapper - using class-based approach instead of :has() */
+.markdown-content .table-wrapper {
+    width: 100%;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1);
+    min-width: 0; /* Allow shrinking below content size */
+}
+
+.markdown-content .table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.markdown-content .table-wrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.markdown-content .table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.markdown-content .table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.markdown-content table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content; /* Allow table to expand based on content */
+    min-width: 100%; /* Ensure table is at least container width */
+    table-layout: auto; /* Allow table to size based on content */
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid #ddd;
+    padding: 12px 16px;
+    vertical-align: top;
+}
+
+.markdown-content th {
+    background-color: #f2f2f2;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 0;
+    white-space: nowrap !important; /* Keep headers on one line */
+    word-wrap: normal !important;
+    overflow-wrap: normal !important;
+    hyphens: none;
+    line-height: 1.4;
+    min-width: fit-content; /* Ensure headers don't get squished */
+}
+
+/* Keep header text on one line */
+.markdown-content th * {
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    overflow-wrap: normal !important;
+}
+
+.markdown-content td {
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto;
+    line-height: 1.6;
+    white-space: normal !important;
+    word-break: break-word !important;
+    min-width: 100px; /* Minimum column width to prevent squishing */
+    max-width: none;
+}
+
+.markdown-content tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Better text handling for long content */
+.markdown-content td code {
+    word-break: break-all !important;
+    white-space: pre-wrap !important;
+    font-size: 0.85em;
+    display: inline-block;
+    max-width: 100%;
+}
+
+/* Responsive behavior for smaller screens */
+@media (max-width: 768px) {
+    .markdown-content .table-wrapper {
+        font-size: 0.85em;
+    }
+    
+    .markdown-content th,
+    .markdown-content td {
+        padding: 8px 12px;
+    }
+}

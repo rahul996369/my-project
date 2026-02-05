@@ -6,9 +6,9 @@ import AppRoutes from "./components/AppRoutes";
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen bg-[#292826] text-[#F9D342]">
+      <div className="flex flex-col h-full min-h-screen bg-[#292826] text-[#F9D342]">
         <Header />
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col min-h-0">
           <AppRoutes />
         </div>
         <Footer />

@@ -1,8 +1,25 @@
+/* Make the app use the full viewport without extra padding,
+   so pages like the chat screen can fill the screen height
+   and handle their own internal scrolling. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* React Router wraps the route in a provider; force it to fill height so Chat input stays at bottom */
+.route-outlet > * {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {

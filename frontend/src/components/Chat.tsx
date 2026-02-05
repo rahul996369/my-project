@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { MessageCircle, Plus, RefreshCw, Send, User, X } from "lucide-react";
 import { useProcessChatMutation } from "../services/chatApi";
 import { Button } from "@/components/ui/button";
+import { usePdfSummarizer } from "./usePdfSummarizer";
 
 interface Message {
   id: string;
@@ -12,9 +14,22 @@ interface Message {
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [processChat, { isLoading }] = useProcessChatMutation();
+  const [processChat, { isLoading: isChatLoading }] = useProcessChatMutation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const {
+    selectedPdf,
+    selectedPdfName,
+    isPdfLoading,
+    fileInputRef,
+    openPicker,
+    handlePdfSelect,
+    clearSelectedPdf,
+    summarizeSelectedPdf,
+  } = usePdfSummarizer();
+
+  const isLoading = isChatLoading || isPdfLoading;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,7 +40,39 @@ export default function Chat() {
   }, [messages, isLoading]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (isLoading) return;
+
+    const hasPdf = selectedPdf != null;
+    const hasText = input.trim().length > 0;
+    if (!hasPdf && !hasText) return;
+
+    if (hasPdf) {
+      const pdfName = selectedPdf?.name ?? "PDF";
+      const optionalMessage = input.trim();
+
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: optionalMessage.length > 0 ? `📎 ${pdfName}\n\n${optionalMessage}` : `📎 ${pdfName}`,
+        sender: "user",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+      if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+      const result = await summarizeSelectedPdf(optionalMessage);
+      const assistantText = result.reply ?? result.error ?? "Sorry, there was an error summarizing the PDF.";
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: assistantText,
+          sender: "assistant",
+          timestamp: new Date(),
+        },
+      ]);
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -33,34 +80,40 @@ export default function Chat() {
       sender: "user",
       timestamp: new Date(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
       const response = await processChat({ message: input.trim() }).unwrap();
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response.reply,
-        sender: "assistant",
-        timestamp: new Date(),
-      };
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: response.reply,
+          sender: "assistant",
+          timestamp: new Date(),
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: "Sorry, there was an error processing your message.",
+          sender: "assistant",
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Sorry, there was an error processing your message.",
-        sender: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+  const handleRefresh = () => {
+    setMessages([]);
+    setInput("");
+    clearSelectedPdf();
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
     }
   };
 
@@ -81,9 +134,9 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#292826] text-[#F9D342]">
+    <div className="flex flex-col flex-1 min-h-0 bg-[#292826] text-[#F9D342]">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full px-3 sm:px-4">
             <div className="text-center">
@@ -106,31 +159,9 @@ export default function Chat() {
                       className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-sm flex items-center justify-center bg-[#F9D342] text-[#292826]"
                     >
                       {message.sender === "user" ? (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          className="text-white sm:w-4 sm:h-4"
-                        >
-                          <path
-                            d="M8 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <User className="h-3.5 w-3.5 text-[#292826] sm:h-4 sm:w-4" />
                       ) : (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          className="text-white sm:w-4 sm:h-4"
-                        >
-                          <path
-                            d="M8 0C3.58 0 0 3.58 0 8c0 1.54.36 2.98.97 4.29L0 16l3.71-.97C5.02 15.64 6.46 16 8 16c4.42 0 8-3.58 8-8s-3.58-8-8-8z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <MessageCircle className="h-3.5 w-3.5 text-[#292826] sm:h-4 sm:w-4" />
                       )}
                     </div>
                   </div>
@@ -151,18 +182,7 @@ export default function Chat() {
                 <div className="flex gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4 text-sm sm:text-base max-w-3xl mx-auto">
                   <div className="flex-shrink-0 flex flex-col items-end">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-sm flex items-center justify-center bg-[#F9D342] text-[#292826]">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        className="text-white sm:w-4 sm:h-4"
-                      >
-                        <path
-                          d="M8 0C3.58 0 0 3.58 0 8c0 1.54.36 2.98.97 4.29L0 16l3.71-.97C5.02 15.64 6.46 16 8 16c4.42 0 8-3.58 8-8s-3.58-8-8-8z"
-                          fill="currentColor"
-                        />
-                      </svg>
+                      <MessageCircle className="h-3.5 w-3.5 text-[#292826] sm:h-4 sm:w-4" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -180,46 +200,83 @@ export default function Chat() {
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-white/20 bg-[#292826]">
+      {/* Input Area - flex-shrink-0 keeps it at the bottom */}
+      <div className="flex-shrink-0 border-t border-white/20 bg-[#292826]">
         <div className="max-w-3xl mx-auto pt-2 px-2 sm:px-4">
           <div className="flex items-end gap-2 p-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={handlePdfSelect}
+              className="hidden"
+              aria-hidden
+            />
             <div className="flex-1 relative">
+              {selectedPdfName && (
+                <div className="absolute left-2 top-2 z-10">
+                  <span className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-300 bg-black/20 rounded px-2 py-1 max-w-[calc(100%-6.5rem)]">
+                    <Plus className="h-3.5 w-3.5 text-[#F9D342]" />
+                    <span className="truncate">{selectedPdfName}</span>
+                    <button
+                      type="button"
+                      onClick={clearSelectedPdf}
+                      className="p-0.5 rounded hover:bg-white/10"
+                      title="Remove PDF"
+                      aria-label="Remove PDF"
+                      disabled={isLoading}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                </div>
+              )}
               <textarea
                 ref={textareaRef}
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Message..."
+                placeholder={selectedPdfName ? "" : "Ask any thing.."}
                 rows={1}
-                className="w-full resize-none bg-[#292826] text-gray-100 rounded-lg px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base focus:outline-none focus:ring-1 focus:ring-[#F9D342] border border-[#F9D342] placeholder-gray-400 max-h-[200px] overflow-y-auto"
+                className={`w-full resize-none bg-[#292826] text-gray-100 rounded-lg px-3 sm:px-4 py-2 sm:py-3 pr-20 sm:pr-24 text-sm sm:text-base focus:outline-none focus:ring-1 focus:ring-[#F9D342] border border-[#F9D342] placeholder-gray-400 max-h-[200px] break-words overflow-x-hidden overflow-y-hidden ${selectedPdfName ? "pt-10" : ""}`}
                 disabled={isLoading}
                 style={{ minHeight: "44px" }}
               />
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                variant="outline"
-                className="absolute right-1.5 sm:right-2 bottom-1.5 sm:bottom-2 p-1 sm:p-1.5 h-7 w-7 sm:h-8 sm:w-8"
-                title="Send message"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  className="sm:w-4 sm:h-4"
+              <div className="absolute right-1.5 sm:right-2 bottom-1.5 sm:bottom-2 flex items-center gap-1">
+                <Button
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  size="icon"
+                  variant="outline"
+                  className="p-1 sm:p-1.5 h-7 w-7 sm:h-8 sm:w-8"
+                  title="Clear chat"
                 >
-                  <path
-                    d="M.5 1.163A1 1 0 0 1 1.97.28l12.868 6.837a1 1 0 0 1 0 1.766L1.969 15.72A1 1 0 0 1 .5 14.836V10.33a1 1 0 0 1 .816-.983L8.5 8 1.316 6.653A1 1 0 0 1 .5 5.67V1.163Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </Button>
+                  <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
+                <Button
+                  onClick={openPicker}
+                  disabled={isLoading}
+                  size="icon"
+                  variant="outline"
+                  className="p-1 sm:p-1.5 h-7 w-7 sm:h-8 sm:w-8"
+                  title="Attach PDF"
+                  aria-label="Attach PDF"
+                >
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
+                <Button
+                  onClick={handleSend}
+                  disabled={(!input.trim() && !selectedPdf) || isLoading}
+                  size="icon"
+                  variant="outline"
+                  className="p-1 sm:p-1.5 h-7 w-7 sm:h-8 sm:w-8"
+                  title="Send message"
+                >
+                  <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        
         </div>
       </div>
     </div>

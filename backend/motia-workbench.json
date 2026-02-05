@@ -29,8 +29,12 @@
     "id": "chat-flow",
     "config": {
       "src\\chat\\simple-chat.step.ts": {
-        "x": 135,
-        "y": 91
+        "x": -120,
+        "y": 127
+      },
+      "src\\chat\\document-summarizer.step.ts": {
+        "x": -563,
+        "y": 131
       }
     }
   }

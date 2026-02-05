@@ -13,6 +13,7 @@ declare module 'motia' {
 
   interface Handlers {
     'SimpleChat': ApiRouteHandler<{ message: string }, ApiResponse<200, { reply: string }> | ApiResponse<400, { error: string }> | ApiResponse<502, { error: string }>, never>
+    'DocumentSummarizer': ApiRouteHandler<{ uploadId: string; message?: string }, ApiResponse<200, { reply: string }> | ApiResponse<400, { error: string }> | ApiResponse<502, { error: string }>, never>
   }
     
 }
